@@ -132,7 +132,7 @@ public:
 			}
 		}
 		if (depth < 0) {
-			return pTitleEnd; // トピックタグではなかった。
+			return pTitleEnd + 1; // トピックタグではなかった。
 		}
 		assert(depth < HierarchyCount);
 
@@ -171,7 +171,7 @@ public:
 
 		// トピック文字列
 		szTopic[0] = L'\0';
-		wchar_t* pTopicEnd = szTopic; // 書き込みポインタ。
+		wchar_t* pTopicEnd = szTopic; // 書き込みポインタ
 
 		// トピック文字列を作成する(1)。トビック番号をバッファに埋め込む。
 		if (bAddNumber) {
@@ -204,9 +204,10 @@ public:
 		refFuncInfoArr.AppendData(nLineNumber + CLogicInt(1), ptPos.GetY2() + CLayoutInt(1), szTopic, 0, treeDepth);
 
 		// ループ継続
-		return pTitleEnd;
+		return pTitleEnd + 1;
 	}
 };
+
 template<int HierarchyCount> inline
 TagProcessor<HierarchyCount>
 MakeTagProcessor(CFuncInfoArr& fia, CLayoutMgr& lmgr, const wchar_t* (&tagHierarchy)[HierarchyCount])
@@ -226,7 +227,7 @@ public:
 
 	/** ドキュメント全体を先頭からスキャンして、見つけた \tag{title} を TagProcessor に渡す。 */
 	template<int HierarchyCount>
-	void each(TagProcessor<HierarchyCount>& process)
+	void each(TagProcessor<HierarchyCount>& process) const
 	{
 		const CLogicInt nLineCount = refDocLineMgr.GetLineCount();
 		for (CLogicInt nLineLen, nLineNumber = CLogicInt(0); nLineNumber < nLineCount; ++nLineNumber) {
@@ -255,8 +256,8 @@ public:
 				pTitle    = pTagEnd < pLineEnd ? pTagEnd + 1 : pLineEnd;
 				pTitleEnd = std::find(pTitle, pLineEnd, L'}');
 
-				// タグの処理は任せる。
 				if (pTag < pTagEnd && pTitle < pTitleEnd && pTitleEnd < pLineEnd) {
+					// タグの処理は任せる。
 					p = process(nLineNumber, pLine, pTag, pTagEnd, pTitle, pTitleEnd, pLineEnd);
 					if (p < pTag || pLineEnd < p) {
 						return; // 無効な値であるか、無限ループのおそれがあるため中断。
