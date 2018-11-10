@@ -57,7 +57,7 @@ public:
 #endif
 	const wchar_t*	GetDocLineStrWithEOL(CLogicInt* pnLen) const //###仮の名前、仮の対処
 	{
-		if(this){
+		if((uintptr_t)this & ~1){
 			*pnLen = GetLengthWithEOL(); return GetPtr();
 		}
 		else{
@@ -66,12 +66,7 @@ public:
 	}
 	CStringRef GetStringRefWithEOL() const //###仮の名前、仮の対処
 	{
-		if(this){
-			return CStringRef(GetPtr(),GetLengthWithEOL());
-		}
-		else{
-			return CStringRef(NULL,0);
-		}
+		return ((uintptr_t)this & ~1) ? CStringRef(GetPtr(),GetLengthWithEOL()) : CStringRef(NULL,0);
 	}
 	const CEol& GetEol() const{ return m_cEol; }
 	void SetEol(const CEol& cEol, COpeBlk* pcOpeBlk);

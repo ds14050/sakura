@@ -4679,7 +4679,7 @@ BOOL CEditWnd::UpdateTextWrap( void )
 void CEditWnd::ChangeLayoutParam( bool bShowProgress, CKetaXInt nTabSize, int nTsvMode, CKetaXInt nMaxLineKetas )
 {
 	HWND		hwndProgress = NULL;
-	if( bShowProgress && NULL != this ){
+	if( bShowProgress && ((uintptr_t)this & ~1) ){
 		hwndProgress = this->m_cStatusBar.GetProgressHwnd();
 		//	Status Barが表示されていないときはm_hwndProgressBar == NULL
 	}

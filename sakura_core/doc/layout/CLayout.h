@@ -67,7 +67,7 @@ public:
 	CLayoutInt GetIndent() const {	return m_nIndent;	}	//!< このレイアウト行のインデントサイズを取得。単位は半角文字。	CMemoryIterator用
 
 	//取得インターフェース
-	CLogicInt GetLogicLineNo() const{ if(this)return m_ptLogicPos.GetY2(); else return CLogicInt(-1); } //$$$高速化
+	CLogicInt GetLogicLineNo() const{ return ((uintptr_t)this & ~1) ? m_ptLogicPos.GetY2() : CLogicInt(-1); } //$$$高速化
 	CLogicInt GetLogicOffset() const{ return m_ptLogicPos.GetX2(); }
 	CLogicPoint GetLogicPos() const{ return m_ptLogicPos; }
 	EColorIndexType GetColorTypePrev() const{ return m_nTypePrev; } //#########汚っ
@@ -99,7 +99,7 @@ public:
 	void _SetNextLayout(CLayout* pcLayout){ m_pNext = pcLayout; }
 
 	//実データ参照
-	const CDocLine* GetDocLineRef() const{ if(this)return m_pCDocLine; else return NULL; } //$$note:高速化
+	const CDocLine* GetDocLineRef() const{ return ((uintptr_t)this & ~1) ? m_pCDocLine : NULL; } //$$note:高速化
 
 	//その他属性参照
 	const CEol& GetLayoutEol() const{ return m_cEol; }

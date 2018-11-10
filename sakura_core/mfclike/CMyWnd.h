@@ -37,7 +37,7 @@ public:
 
 	void SetHwnd(HWND hwnd){ m_hWnd = hwnd; }
 	HWND GetHwnd() const{ return m_hWnd; }
-	HWND GetSafeHwnd() const{ return this?m_hWnd:NULL; }
+	HWND GetSafeHwnd() const{ return ((uintptr_t)this & ~1) ? m_hWnd : NULL; }
 	void InvalidateRect(LPCRECT lpRect, BOOL bErase = TRUE){ ::InvalidateRect(m_hWnd, lpRect, bErase); }
 	int ScrollWindowEx(int dx, int dy, const RECT* prcScroll, const RECT* prcClip, HRGN hrgnUpdate, RECT* prcUpdate, UINT uFlags)
 	{

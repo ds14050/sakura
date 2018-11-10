@@ -160,12 +160,13 @@ public:
 	}
 
 	//#######ラップ
-	EColorIndexType GetStrategyColorSafe() const{ if(this)return GetStrategyColor(); else return COLORIDX_TEXT; }
-	CLayoutColorInfo* GetStrategyColorInfoSafe() const{
-		if(this){
-			return GetStrategyColorInfo();
-		}
-		return NULL;
+	EColorIndexType GetStrategyColorSafe() const
+	{
+		return ((uintptr_t)this & ~1) ? GetStrategyColor() : COLORIDX_TEXT;
+	}
+	CLayoutColorInfo* GetStrategyColorInfoSafe() const
+	{
+		return ((uintptr_t)this & ~1) ? GetStrategyColorInfo() : NULL;
 	}
 
 protected:
