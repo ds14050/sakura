@@ -137,7 +137,7 @@ exit /b 0
 		echo ERROR: cannot make the waittoken file: ".\%Token%".
 		exit /B 1
 	)
-	start "" "%COMSPEC%" /C "%2 %3 %4 %5 %6 %7 %8 %9 >".\%Token%"&&del ".\%Token%""
+	start "" /BELOWNORMAL "%COMSPEC%" /C "%2 %3 %4 %5 %6 %7 %8 %9 >".\%Token%"&&del ".\%Token%""
 	if errorlevel 1 (
 		echo ERROR: faild command: start "" "%COMSPEC%" /C "%2 %3 %4 %5 %6 %7 %8 %9 >".\%Token%"&&del ".\%Token%""
 	)
