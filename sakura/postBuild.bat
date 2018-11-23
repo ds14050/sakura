@@ -17,7 +17,9 @@ set PLATFORM=%1
 set CONFIGURATION=%2
 @echo CONFIGURATION=%CONFIGURATION%
 
-set DEST_DIR=..\%PLATFORM%\%CONFIGURATION%
+if not defined Build^
+   set Build=%~dp0%PLATFORM%\%CONFIGURATION%
+set DEST_DIR=%Build%
 
 : ---- bron412 ---- :
 set INSTALLER_RESOURCES_BRON=%~dp0..\installer\temp\bron
