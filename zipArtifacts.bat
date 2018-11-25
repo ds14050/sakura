@@ -27,160 +27,115 @@ if "%platform%" == "x64" (
 	set ALPHA=
 )
 
-set ZIP_CMD=%~dp0tools\zip\zip.bat
-set LIST_ZIP_CMD=%~dp0tools\zip\listzip.bat
+rem Definitions and Dependencies
 
-@rem ----------------------------------------------------------------
-@rem build WORKDIR
-@rem ----------------------------------------------------------------
-set WORKDIR=%BASENAME%
-set WORKDIR_LOG=%WORKDIR%\Log
-set WORKDIR_EXE=%WORKDIR%\EXE
-set WORKDIR_INST=%WORKDIR%\Installer
-set WORKDIR_ASM=%BASENAME%-Asm
-set OUTFILE=%BASENAME%-All.zip
-set OUTFILE_LOG=%BASENAME%-Log.zip
-set OUTFILE_ASM=%BASENAME%-Asm.zip
-set OUTFILE_INST=%BASENAME%-Installer.zip
-set OUTFILE_EXE=%BASENAME%-Exe.zip
+call :Set_BASENAME
+set SRC=%~dp0
+set SRC=%SRC:~0,-1%
+set DST=%~dp0%BASENAME%
+set TAB=	
+set HASH_BAT=!SRC!\calc-hash.bat
+set  ZIP_BAT=!SRC!\tools\zip\zip.bat
 
-@rem cleanup for local testing
-if exist "%OUTFILE%" (
-	del %OUTFILE%
-)
-if exist "%OUTFILE_LOG%" (
-	del %OUTFILE_LOG%
-)
-if exist "%OUTFILE_ASM%" (
-	del %OUTFILE_ASM%
-)
-if exist "%OUTFILE_INST%" (
-	del %OUTFILE_INST%
-)
-if exist "%OUTFILE_EXE%" (
-	del %OUTFILE_EXE%
-)
-if exist "%WORKDIR%" (
-	rmdir /s /q "%WORKDIR%"
-)
-if exist "%WORKDIR_ASM%" (
-	rmdir /s /q "%WORKDIR_ASM%"
-)
+rem Setup
 
-mkdir %WORKDIR%
-mkdir %WORKDIR_LOG%
-mkdir %WORKDIR_EXE%
-mkdir %WORKDIR_EXE%\license\
-mkdir %WORKDIR_EXE%\license\bregonig\
-mkdir %WORKDIR_EXE%\license\ctags\
-mkdir %WORKDIR_INST%
-copy /Y /B %platform%\%configuration%\sakura.exe %WORKDIR_EXE%\
-copy /Y /B %platform%\%configuration%\*.dll      %WORKDIR_EXE%\
-copy /Y /B %platform%\%configuration%\*.pdb      %WORKDIR_EXE%\
+rmdir /s /q "%DST%" 2>nul
+mkdir       "%DST%"
 
-: LICENSE
-copy /Y .\LICENSE                                   %WORKDIR_EXE%\license\ > NUL
+rem Main
 
-: bregonig
-set INSTALLER_RESOURCES_BRON=%~dp0installer\temp\bron
-copy /Y %INSTALLER_RESOURCES_BRON%\*.txt            %WORKDIR_EXE%\license\bregonig\
+set WORKING_ZIP=
+set WORKING_PATH=.\
+set WORKING_FILE=
+for /F "usebackq tokens=* eol=# delims=" %%L in ("%~dpn0.txt" 'FINISHED') do (
+	rem TODO: Forbid ".."
+	rem Prevent the next 'for' command from merging empty columns.
+	set L=%%L%TAB%%TAB%%TAB%
+	set L=!L:%TAB%= %TAB%!
+for /F "usebackq tokens=1,2,3 delims=%TAB%" %%A in ('!L!') do (
+	rem First column: Zip name (relative to %DST% for working & relative to %SRC% for output)
+	set rpnxA=%%~dpnxA
+	set rpnxA=!rpnxA:%CD:)=^)%\=!
+	if not "!rpnxA: =!" == "" (
+		rem Make a zip before switching WORKING_ZIP.
+		if defined WORKING_ZIP for /F "delims=" %%P in ("!DST!\!WORKING_ZIP!") do (
+			cmd /V:ON /C "pushd "%%~P" &("!HASH_BAT!" sha256.txt . >nul)& popd"^
+			|| del "%%~P\sha256.txt" 2>nul
+			cmd /V:ON /C ""!ZIP_BAT!" "!SRC!\%%~nxP" "%%~P\*""^
+			|| del "!SRC!\%%~nxP" 2>nul
+			rmdir /S /Q "%%~P"
 
-: ctags.exe
-set INSTALLER_RESOURCES_CTAGS=%~dp0installer\temp\ctags
-copy /Y /B %INSTALLER_RESOURCES_CTAGS%\ctags.exe    %WORKDIR_EXE%\
-copy /Y /B %INSTALLER_RESOURCES_CTAGS%\README.md    %WORKDIR_EXE%\license\ctags\
-copy /Y /B %INSTALLER_RESOURCES_CTAGS%\license\*.*  %WORKDIR_EXE%\license\ctags\
+			set WORKING_ZIP=
+			set WORKING_PATH=.\
+			set WORKING_FILE=
+		)
 
-copy /Y /B help\macro\macro.chm    %WORKDIR_EXE%\
-copy /Y /B help\plugin\plugin.chm  %WORKDIR_EXE%\
-copy /Y /B help\sakura\sakura.chm  %WORKDIR_EXE%\
-copy /Y /B html\sakura-doxygen.chm %WORKDIR_EXE%\
-copy /Y /B html\sakura-doxygen.chi %WORKDIR_EXE%\
+		@echo ZIP  !rpnxA!
 
-copy /Y /B installer\Output-%platform%\*.exe       %WORKDIR_INST%\
-copy /Y msbuild-%platform%-%configuration%.log     %WORKDIR_LOG%\
-copy /Y msbuild-%platform%-%configuration%.log.csv %WORKDIR_LOG%\
-if exist "msbuild-%platform%-%configuration%.log.xlsx" (
-	copy /Y /B "msbuild-%platform%-%configuration%.log.xlsx" %WORKDIR_LOG%\
-)
-set ISS_LOG_FILE=iss-%platform%-%configuration%.log
-if exist "%ISS_LOG_FILE%" (
-	copy /Y /B "%ISS_LOG_FILE%" %WORKDIR_LOG%\
-)
+		rem Prepare working directory for a zip.
+		mkdir 2>nul  "!DST!\!rpnxA!"
+		if not exist "!DST!\!rpnxA!" (
+			goto :CleanExit 1
+		)
 
-copy /Y sakura_core\githash.h                      %WORKDIR_LOG%\
-if exist "cppcheck-install.log" (
-	copy /Y "cppcheck-install.log" %WORKDIR_LOG%\
-)
-if exist "cppcheck-%platform%-%configuration%.xml" (
-	copy /Y "cppcheck-%platform%-%configuration%.xml" %WORKDIR_LOG%\
-)
-if exist "cppcheck-%platform%-%configuration%.log" (
-	copy /Y "cppcheck-%platform%-%configuration%.log" %WORKDIR_LOG%\
-)
-if exist "doxygen-%platform%-%configuration%.log" (
-	copy /Y "doxygen-%platform%-%configuration%.log" %WORKDIR_LOG%\
-)
+		set WORKING_ZIP=!rpnxA!
+	)
+	rem Second column: Path (destination, relative to Zip)
+	set rpB=%%~dpB
+	set rpB=!rpB:%CD:)=^)%\=!
+	if not "!rpB: =!" == "" (
+		@echo PATH !rpB!
 
-if exist "set_appveyor_env.bat" (
-	copy /Y "set_appveyor_env.bat" %WORKDIR_LOG%\
-)
+		rem Unfinished preparation.
+		if not defined WORKING_ZIP (
+			@echo>&2 ERROR: Give zip name before path.
+			goto :CleanExit 1
+		)
+		if not exist "!DST!\!WORKING_ZIP!" (
+			@echo>&2 ERROR: Missing directory: !DST!\!WORKING_ZIP!
+			goto :CleanExit 1
+		)
+		rem Prepare working directory for a path.
+		mkdir 2>nul  "!DST!\!WORKING_ZIP!\!rpB!"
+		if not exist "!DST!\!WORKING_ZIP!\!rpB!" (
+			goto :CleanExit 1
+		)
 
-set HASHFILE=sha256.txt
-if exist "%HASHFILE%" (
-	del %HASHFILE%
-)
-call calc-hash.bat %HASHFILE% %WORKDIR%\
-if exist "%HASHFILE%" (
-	copy /Y %HASHFILE%           %WORKDIR%\
-)
+		set WORKING_PATH=!rpB!
+		set WORKING_FILE=!%%~nxB!
+	)
+	rem Third column: File (source, relative to %SRC%)
+	if not "%%~C" == " " (
+		@echo FILE %%~C
 
-copy /Y installer\warning.txt   %WORKDIR%\
-if defined ALPHA (
-	copy /Y installer\warning-alpha.txt   %WORKDIR%\
-)
-@rem temporally disable to zip all files to a file to workaround #514.
-@rem call %ZIP_CMD%       %OUTFILE%      %WORKDIR%
+		rem Unfinished preparation.
+		if not exist "!DST!\!WORKING_ZIP!\!WORKING_PATH!" (
+			@echo>&2 ERROR: Missing directory: !DST!\!WORKING_ZIP!\!WORKING_PATH!
+		)
+		rem Prepare working file.
+		copy /Y /B "!SRC!\%%~C" "!DST!\!WORKING_ZIP!\!WORKING_PATH!!WORKING_FILE!"
+	)
+))
 
-call %ZIP_CMD%       %OUTFILE_LOG%  %WORKDIR_LOG%
+goto :CleanExit 0
 
-@rem copy text files for warning after zipping %OUTFILE% because %WORKDIR% is the parent directory of %WORKDIR_EXE% and %WORKDIR_INST%.
-if defined ALPHA (
-	copy /Y installer\warning-alpha.txt   %WORKDIR_EXE%\
-	copy /Y installer\warning-alpha.txt   %WORKDIR_INST%\
-)
-copy /Y installer\warning.txt        %WORKDIR_EXE%\
-copy /Y installer\warning.txt        %WORKDIR_INST%\
-call %ZIP_CMD%       %OUTFILE_INST%  %WORKDIR_INST%
-call %ZIP_CMD%       %OUTFILE_EXE%   %WORKDIR_EXE%
+:CleanExit
+	if defined WORKING_ZIP rmdir /S /Q "%DST%\%WORKING_ZIP%" 2>nul
+	rmdir /Q "%DST%"
+exit /b %1
 
-@echo start zip asm
-mkdir %WORKDIR_ASM%
-copy /Y sakura\%platform%\%configuration%\*.asm %WORKDIR_ASM%\ > NUL
-call %ZIP_CMD%       %OUTFILE_ASM%  %WORKDIR_ASM%
 
-@echo end   zip asm
-
-if exist "%WORKDIR%" (
-	rmdir /s /q "%WORKDIR%"
-)
-if exist "%WORKDIR_ASM%" (
-	rmdir /s /q "%WORKDIR_ASM%"
-)
-
-exit /b 0
-
-@rem ---------------------- BASENAME ---------------------------------
-@rem "sakura"
-@rem BUILD_ACCOUNT (option)
-@rem TAG_NAME      (option) "tag-" is prefixed.
-@rem PR_NUMBER     (option) "PR" is prefixed.
-@rem {BUILD_NUMBER|"Local"} "build" is prefixed.
-@rem SHORTHASH     (option) SHORTHASH is leading 8 charactors
-@rem PLATFORM
-@rem CONFIGURATION
-@rem ALPHA         (x64 build only)
-@rem ----------------------------------------------------------------
+rem ---------------------- BASENAME ---------------------------------
+rem "sakura"
+rem BUILD_ACCOUNT (option)
+rem TAG_NAME      (option) "tag-" is prefixed.
+rem PR_NUMBER     (option) "PR" is prefixed.
+rem {BUILD_NUMBER|"Local"} "build" is prefixed.
+rem SHORTHASH     (option) SHORTHASH is leading 8 charactors
+rem PLATFORM
+rem CONFIGURATION
+rem ALPHA         (x64 build only)
+rem ----------------------------------------------------------------
 
 :Set_BASENAME
 	setlocal ENABLEDELAYEDEXPANSION
@@ -196,7 +151,7 @@ exit /b 0
 	if defined PR_NUMBER set PR_NUMBER=PR%PR_NUMBER%
 
 	set BUILD_NUMBER=%APPVEYOR_BUILD_NUMBER%
-	if defined BUILD_NUMBER set BUILD_NUMBER=Local
+	if not defined BUILD_NUMBER set BUILD_NUMBER=Local
 	set BUILD_NUMBER=build%BUILD_NUMBER%
 
 	set SHORTHASH=%APPVEYOR_REPO_COMMIT%
@@ -213,15 +168,16 @@ exit /b 0
 		BUILD_ACCOUNT TAG_NAME PR_NUMBER BUILD_NUMBER
 		SHORTHASH PLATFORM CONFIGURATION ALPHA
 	) do (
-		echo %%V=!%%V!
+		@echo %%V=!%%V!
 		if defined %%V set BASENAME=!BASENAME!-!%%V!
 	)
+	@echo BASENAME=%BASENAME%
 
 	endlocal & set BASENAME=%BASENAME%
 exit /b 0
 
-@rem '/' -> '_'
-@rem ' ' -> '_'
+rem '/' -> '_'
+rem ' ' -> '_'
 :ReplaceForbiddenPathChars
 	setlocal ENABLEDELAYEDEXPANSION
 
