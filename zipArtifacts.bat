@@ -44,11 +44,102 @@ rem Setup
 rmdir /s /q "%DST%" 2>nul
 mkdir       "%DST%"
 
-rem Main
+rem Processor object
 
 set WORKING_ZIP=
 set WORKING_PATH=.\
 set WORKING_FILE=
+
+goto :end_Processor
+
+:OnZip
+	rem Make a zip before switching WORKING_ZIP.
+	call :MakeZip "%WORKING_ZIP%"
+	set WORKING_ZIP=
+	set WORKING_PATH=.\
+	set WORKING_FILE=
+
+	setlocal ENABLEDELAYEDEXPANSION
+
+	set rpnx1=%~dpnx1
+	set rpnx1=!rpnx1:%CD%\=!
+
+	@echo ZIP  %rpnx1%
+
+	rem Prepare working directory for a zip.
+	mkdir 2>nul  "%DST%\%rpnx1%"
+	if not exist "%DST%\%rpnx1%" (
+		exit /b 1
+	)
+
+	endlocal & set WORKING_ZIP=%rpnx1%
+exit /b 0
+
+:OnPath
+	setlocal ENABLEDELAYEDEXPANSION
+
+	set rp1=%~dp1
+	set rp1=!rp1:%CD%\=!
+
+	@echo PATH %rp1%
+
+	rem Unfinished preparation.
+	if not defined WORKING_ZIP (
+		@echo>&2 ERROR: Give zip name before path.
+		exit /b 1
+	)
+	if not exist "%DST%\%WORKING_ZIP%" (
+		@echo>&2 ERROR: Missing directory: !DST!\!WORKING_ZIP!
+		exit /b 1
+	)
+
+	rem Prepare working directory for a path.
+	mkdir 2>nul  "%DST%\%WORKING_ZIP%\%rp1%"
+	if not exist "%DST%\%WORKING_ZIP%\%rp1%" (
+		exit /b 1
+	)
+
+	endlocal & set WORKING_PATH=%rp1%& set WORKING_FILE=%~nx1
+exit /b 0
+
+:OnFile
+	setlocal ENABLEDELAYEDEXPANSION
+
+	@echo FILE %~1
+
+	rem Unfinished preparation.
+	if not exist "%DST%\%WORKING_ZIP%\%WORKING_PATH%" (
+		@echo>&2 ERROR: Missing directory: !DST!\!WORKING_ZIP!\!WORKING_PATH!
+		exit /b 1
+	)
+
+	rem Prepare working file.
+	set SourcePath=%SRC%\%~1
+	call :TryUnzipPath SourcePath
+	if not "%SourcePath%" == "%SRC%\%~1" echo FILE %SourcePath%
+	copy /Y /B "%SourcePath%" "%DST%\%WORKING_ZIP%\%WORKING_PATH%%WORKING_FILE%"
+exit /b 0
+
+:MakeZip
+	setlocal
+
+	set WORKING_ZIP=%~1
+	if not defined WORKING_ZIP exit /b 0
+	for /F "delims=" %%P in (
+		"%DST%\%WORKING_ZIP%"
+	) do set ZipSrc=%%~P& set ZipName=%%~nxP
+
+	cmd /C "pushd "%ZipSrc%" &"%HASH_BAT%" sha256.txt . >nul"^
+	|| del 2>nul "%ZipSrc%\sha256.txt"
+	cmd /C ""%ZIP_BAT%" "%SRC%\%ZipName%" "%ZipSrc%\*""^
+	|| del 2>nul "%SRC%\%ZipName%"
+	rmdir /S /Q "%ZipSrc%"
+exit /b 0
+
+:end_Processor
+
+rem Main loop
+
 for /F "usebackq tokens=* eol=# delims=" %%L in ("!RECIPE_FILE!" 'FINISHED') do (
 	rem TODO: Forbid ".."
 	rem Prevent the next 'for' command from merging empty columns.
@@ -56,79 +147,32 @@ for /F "usebackq tokens=* eol=# delims=" %%L in ("!RECIPE_FILE!" 'FINISHED') do 
 	set L=!L:%TAB%= %TAB%!
 for /F "usebackq tokens=1,2,3 delims=%TAB%" %%A in ('!L!') do (
 	rem First column: Zip name (relative to %DST% for working & relative to %SRC% for output)
-	set rpnxA=%%~dpnxA
-	set rpnxA=!rpnxA:%CD:)=^)%\=!
-	if not "!rpnxA: =!" == "" (
-		rem Make a zip before switching WORKING_ZIP.
-		if defined WORKING_ZIP for /F "delims=" %%P in ("!DST!\!WORKING_ZIP!") do (
-			cmd /V:ON /C "pushd "%%~P" &("!HASH_BAT!" sha256.txt . >nul)& popd"^
-			|| del "%%~P\sha256.txt" 2>nul
-			cmd /V:ON /C ""!ZIP_BAT!" "!SRC!\%%~nxP" "%%~P\*""^
-			|| del "!SRC!\%%~nxP" 2>nul
-			rmdir /S /Q "%%~P"
+	call :OnColumn "%%~A" OnZip^
+	|| (call :Clean & exit /b 1)
 
-			set WORKING_ZIP=
-			set WORKING_PATH=.\
-			set WORKING_FILE=
-		)
+	rem Second column: Path (destination, relative to Zip)		
+	call :OnColumn "%%~B" OnPath^
+	|| (call :Clean & exit /b 1)
 
-		@echo ZIP  !rpnxA!
-
-		rem Prepare working directory for a zip.
-		mkdir 2>nul  "!DST!\!rpnxA!"
-		if not exist "!DST!\!rpnxA!" (
-			goto :CleanExit 1
-		)
-
-		set WORKING_ZIP=!rpnxA!
-	)
-	rem Second column: Path (destination, relative to Zip)
-	set rpB=%%~dpB
-	set rpB=!rpB:%CD:)=^)%\=!
-	if not "!rpB: =!" == "" (
-		@echo PATH !rpB!
-
-		rem Unfinished preparation.
-		if not defined WORKING_ZIP (
-			@echo>&2 ERROR: Give zip name before path.
-			goto :CleanExit 1
-		)
-		if not exist "!DST!\!WORKING_ZIP!" (
-			@echo>&2 ERROR: Missing directory: !DST!\!WORKING_ZIP!
-			goto :CleanExit 1
-		)
-		rem Prepare working directory for a path.
-		mkdir 2>nul  "!DST!\!WORKING_ZIP!\!rpB!"
-		if not exist "!DST!\!WORKING_ZIP!\!rpB!" (
-			goto :CleanExit 1
-		)
-
-		set WORKING_PATH=!rpB!
-		set WORKING_FILE=!%%~nxB!
-	)
-	rem Third column: File (source, relative to %SRC%)
-	if not "%%~C" == " " (
-		@echo FILE %%~C
-
-		rem Unfinished preparation.
-		if not exist "!DST!\!WORKING_ZIP!\!WORKING_PATH!" (
-			@echo>&2 ERROR: Missing directory: !DST!\!WORKING_ZIP!\!WORKING_PATH!
-		)
-		rem Prepare working file.
-		set SourcePath=!SRC!\%%~C
-		call :TryUnzipPath SourcePath
-		if not "!SourcePath!" == "!SRC!\%%~C" echo FILE !SourcePath!
-		copy /Y /B "!SourcePath!" "!DST!\!WORKING_ZIP!\!WORKING_PATH!!WORKING_FILE!"
-	)
+	rem Third column: File (source, relative to %SRC%)		
+	call :OnColumn "%%~C" OnFile^
+	|| (call :Clean & exit /b 1)
 ))
+call :Clean & exit /b 0
 
-goto :CleanExit 0
+:OnColumn
+	setlocal
+	set C=%~1
+	call :Trim C
+	endlocal & if not "%C%" == "" call :%2 "%C%"^
+	|| exit /b 1
+exit /b 0
 
-:CleanExit
+:Clean
 	if exist "%LastZipDir%" rmdir /S /Q "%LastZipDir%"
 	if defined WORKING_ZIP  rmdir /S /Q "%DST%\%WORKING_ZIP%" 2>nul
-	rmdir /Q "%DST%"
-exit /b %1
+	rmdir /Q "%DST%" 2>nul
+exit /b 0
 
 rem -------------------------------------------------------
 
@@ -177,6 +221,25 @@ rem -------------------------------------------------------
 	)
 
 	endlocal & set LastZipDir=%ZipDir%& set %VAR%=%VAL%
+exit /b 0
+
+rem -------------------------------------------------------
+
+:Trim
+	setlocal ENABLEDELAYEDEXPANSION
+
+	set VAR=%~1
+	if not defined VAR exit /b 1
+	set VAL=!%VAR%!
+	if not defined VAL exit /b 0
+
+	call :Set_TRIMMED %VAL%
+
+	endlocal & set %VAR%=%TRIMMED%
+exit /b 0
+
+:Set_TRIMMED
+	set TRIMMED=%*
 exit /b 0
 
 rem ---------------------- BASENAME ---------------------------------
