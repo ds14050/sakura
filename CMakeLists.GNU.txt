@@ -1,0 +1,57 @@
+cmake_minimum_required (VERSION 3.12)
+
+#
+# CMake の動作を変更する。
+#
+
+set (CMAKE_CXX_FLAGS
+	""
+)
+set (CMAKE_CXX_FLAGS_RELEASE
+	""
+)
+set (CMAKE_CXX_FLAGS_DEBUG
+	"-g"
+)
+set (CMAKE_EXE_LINKER_FLAGS
+	"-static"
+)
+set (CMAKE_STATIC_LINKER_FLAGS
+	""
+)
+
+#
+# インクルード元で使えるように置いておく
+# コンパイラ間の差異を吸収する変数・関数。
+#
+
+set (SAKURA_CXX_FLAGS_UTF8_SOURCE
+	"-finput-charset=utf-8"
+)
+
+function (target_resource_only_dll
+	target
+)
+	file (GENERATE OUTPUT ${DST}/CMakeFiles/${target}.dir/NoEntry.cpp
+		CONTENT "extern \"C\" __stdcall int NoEntry() { return 1; }"
+	)
+	target_sources (${target}
+		PRIVATE ${DST}/CMakeFiles/${target}.dir/NoEntry.cpp
+	)
+	target_link_libraries (${target}
+		PRIVATE -nostdlib -nodefaultlibs -Wl,-e,NoEntry
+	)
+endfunction()
+
+#
+# インクルード元の動作を変える。
+#
+
+file (GLOB_RECURSE ALL_RC
+	"${SRC}/sakura_core/*.rc"
+	"${SRC}/sakura_lang_en_US/*.rc"
+)
+set_property (SOURCE ${ALL_RC}
+	APPEND PROPERTY COMPILE_OPTIONS
+	-c utf-8 --language=0411
+)

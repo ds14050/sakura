@@ -1,0 +1,45 @@
+cmake_minimum_required (VERSION 3.12)
+
+#
+# CMake の動作を変更する。
+#
+
+set (CMAKE_CXX_FLAGS
+	"${CMAKE_CXX_FLAGS} /GF /FD /Zi /execution-charset:shift_jis"
+)
+set (CMAKE_CXX_FLAGS_RELEASE
+	"/MT /GL"
+)
+set (CMAKE_CXX_FLAGS_DEBUG
+	"/MTd"
+)
+set (CMAKE_EXE_LINKER_FLAGS_RELEASE
+	"-LTCG -INCREMENTAL:NO"
+)
+set (CMAKE_STATIC_LINKER_FLAGS
+	"-ignore:4221" # VC warning LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
+)
+set (CMAKE_STATIC_LINKER_FLAGS_RELEASE
+	"-LTCG -INCREMENTAL:NO"
+)
+
+#
+# インクルード元で使えるように置いておく
+# コンパイラ間の差異を吸収する変数・関数。
+#
+
+set (SAKURA_CXX_FLAGS_UTF8_SOURCE
+	"/source-charset:utf-8"
+)
+
+function (target_resource_only_dll
+	target
+)
+	target_link_libraries (${target}
+		PRIVATE -NOENTRY
+	)
+endfunction()
+
+#
+# インクルード元の動作を変える。
+#
