@@ -9,6 +9,17 @@ platform:
   - x64
   - MinGW
 
+cache:
+  - C:\SakuraBuild
+  - .\sakura_core\Funccode_define.h
+  - .\sakura_core\Funccode_enum.h
+  - .\sakura_core\githash.h
+
+before_build:
+- cmd: |
+    set Build=C:\SakuraBuild\%PLATFORM%\%CONFIGURATION%
+    if exist "%Build%" powershell -File .\tools\RestoreCommitterDateRoughly.ps1
+
 build_script:
 - cmd: >
     for %%B in (
@@ -24,7 +35,7 @@ build_script:
     || (echo error %%B & exit /b 0)
 
 after_build:
-- cmd: set SAKURA_TEST=%PLATFORM%\%CONFIGURATION%\sakura_test.exe
+- cmd: set SAKURA_TEST=%Build%\sakura_test.exe
 
 test:
   assemblies:
