@@ -1,4 +1,3 @@
-version: 1.0.{build}
 image: Visual Studio 2017
 
 configuration:
@@ -11,14 +10,31 @@ platform:
   - MinGW
 
 build_script:
-- cmd: >-
-    call checkEncoding.bat
+- cmd: >
+    for %%B in (
+    checkEncoding.bat
+    build-by-cmake.bat
+    sakura\postBuild.bat
+    build-chm.bat
+    build-installer.bat
+    externals\cppcheck\install-cppcheck.bat
+    run-cppcheck.bat
+    zipArtifacts.bat
+    ) do (cmd /C "pushd "%%~dpB" & %%~nxB %PLATFORM% %CONFIGURATION% all")
+    || (echo error %%B & exit /b 0)
 
-    call build-all.bat %PLATFORM% %CONFIGURATION%
+after_build:
+- cmd: set SAKURA_TEST=%PLATFORM%\%CONFIGURATION%\sakura_test.exe
 
-    call tests\build-and-test.bat %PLATFORM% %CONFIGURATION%
+test:
+  assemblies:
+    only:
+      - '%SAKURA_TEST%'
 
-    echo appveyor_yml
+test_script:
+- cmd: |
+    "%SAKURA_TEST%" --gtest_list_tests
+    "%SAKURA_TEST%" | tests\test_result_filter_tell_AppVeyor.bat
 
 artifacts:
 - path: 'sakura-*$(platform)-$(configuration)*.zip'
