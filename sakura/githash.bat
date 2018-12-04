@@ -1,6 +1,6 @@
 @echo off
 
-set OUT_DIR=%1
+set OUT_DIR=%~1
 if "%OUT_DIR%" == "" (
 	set OUT_DIR=.
 )
@@ -115,15 +115,15 @@ if "%VALID_CREATE_GITHASH%" == "0" (
 	exit /b 0
 )
 
-call :output_githash > %GITHASH_H_TMP%
+call :output_githash > "%GITHASH_H_TMP%"
 
-fc %GITHASH_H% %GITHASH_H_TMP% 1>nul 2>&1
+fc "%GITHASH_H%" "%GITHASH_H_TMP%" 1>nul 2>&1
 if not errorlevel 1 (
-	del %GITHASH_H_TMP%
+	del "%GITHASH_H_TMP%"
 	@echo %GITHASH_H% was not updated.
 ) else (
-	if exist %GITHASH_H% del %GITHASH_H%
-	move /y %GITHASH_H_TMP% %GITHASH_H%
+	if exist "%GITHASH_H%" del "%GITHASH_H%"
+	move /y "%GITHASH_H_TMP%" "%GITHASH_H%"
 	@echo %GITHASH_H% was updated.
 )
 
