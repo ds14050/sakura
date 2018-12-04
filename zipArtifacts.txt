@@ -23,7 +23,7 @@
 		installer\externals\universal-ctags\ctags-2018-09-16_e522743d-!platform:Win32=x86!.zip\license\*.*
 !BASENAME!-Installer.zip
 	Installer\
-		installer\Output-!platform!\*.exe
+		!platform!\!configuration!\installer\Output-!platform!\*.exe
 		installer\warning.txt
 		installer\warning-!ALPHA!.txt
 !BASENAME!-Log.zip
