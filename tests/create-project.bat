@@ -26,10 +26,7 @@ if not exist "googletest\CMakeLists.txt" (
 )
 
 set BUILDDIR=build\%platform%
-if exist "%BUILDDIR%" (
-	rmdir /s /q "%BUILDDIR%"
-)
-mkdir "%BUILDDIR%"
+mkdir 2>nul "%BUILDDIR%" 
 
 call :setenv_%platform% %platform% %configuration%
 cmake %CMAKE_GEN_OPT% -H. -B"%BUILDDIR%" || set ERROR_RESULT=1
