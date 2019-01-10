@@ -30,13 +30,13 @@ if "%configuration%" == "Release" (
 path=C:\msys64\mingw64\bin;%path%
 
 @echo mingw32-make -C sakura_core MYDEFINES="%MYDEFINES%" MYCFLAGS="%MYCFLAGS%" MYLIBS="%MYLIBS%"
-mingw32-make -C sakura_core MYDEFINES="%MYDEFINES%" MYCFLAGS="%MYCFLAGS% -fdiagnostics-color=always" MYLIBS="%MYLIBS%" githash stdafx Funccode_enum.h Funccode_define.h 2>&1 |powershell -File "%~dp0tools\g++_error_filter_tell_AppVeyor.ps1"
+mingw32-make -C sakura_core MYDEFINES="%MYDEFINES%" MYCFLAGS="%MYCFLAGS%" MYLIBS="%MYLIBS%" githash stdafx Funccode_enum.h Funccode_define.h 2>&1 |powershell -ExecutionPolicy RemoteSigned -File "%~dp0tools\g++_error_filter_tell_AppVeyor.ps1"
 if errorlevel 1 (
 	echo error 1 errorlevel %errorlevel%
 	exit /b 1
 )
 
-mingw32-make -C sakura_core MYDEFINES="%MYDEFINES%" MYCFLAGS="%MYCFLAGS% -fdiagnostics-color=always" MYLIBS="%MYLIBS%" -j4 2>&1 |powershell -File "%~dp0tools\g++_error_filter_tell_AppVeyor.ps1"
+mingw32-make -C sakura_core MYDEFINES="%MYDEFINES%" MYCFLAGS="%MYCFLAGS%" MYLIBS="%MYLIBS%" -j4 2>&1 |powershell -ExecutionPolicy RemoteSigned -File "%~dp0tools\g++_error_filter_tell_AppVeyor.ps1"
 if errorlevel 1 (
 	echo error 2 errorlevel %errorlevel%
 	exit /b 1
