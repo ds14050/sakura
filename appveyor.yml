@@ -9,6 +9,9 @@ platform:
   - MinGW
 
 build_script:
+- ps: |
+    get-module
+    get-module -listAvailable
 - cmd: |
     build-all.bat %PLATFORM% %CONFIGURATION%
 
