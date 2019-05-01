@@ -55,3 +55,7 @@ set_property (SOURCE ${ALL_RC}
 	APPEND PROPERTY COMPILE_OPTIONS
 	-c utf-8 --language=0411
 )
+
+target_link_libraries (sakura
+	PRIVATE -municode
+)
