@@ -165,10 +165,12 @@ target_compile_definitions (sakura_core
 )
 target_link_libraries (sakura_core
 	PRIVATE comctl32
+	        imagehlp
 	        imm32
 	        mpr
-	        imagehlp
+	        msimg32
 	        shlwapi
+	        windowscodecs
 	        winmm
 )
 target_include_directories (sakura_core
