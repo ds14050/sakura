@@ -30,6 +30,12 @@ if "%platform%" == "x64" (
 set ZIP_CMD=%~dp0tools\zip\zip.bat
 set LIST_ZIP_CMD=%~dp0tools\zip\listzip.bat
 
+if not defined Build^
+   set Build=%~dp0%Platform%\%Config%
+set DST=%Build%
+set SRC=%~dp0
+set SRC=%SRC:~0,-1%
+
 @rem ----------------------------------------------------------------
 @rem prepare environment variable
 @rem ----------------------------------------------------------------
@@ -196,9 +202,9 @@ mkdir %WORKDIR_EXE%\license\bregonig\
 mkdir %WORKDIR_EXE%\license\ctags\
 mkdir %WORKDIR_DEV%
 mkdir %WORKDIR_INST%
-copy /Y /B %platform%\%configuration%\sakura.exe %WORKDIR_EXE%\
-copy /Y /B %platform%\%configuration%\*.dll      %WORKDIR_EXE%\
-copy /Y /B %platform%\%configuration%\*.pdb      %WORKDIR_DEV%\
+copy /Y /B %DST%\sakura.exe %WORKDIR_EXE%\
+copy /Y /B %DST%\*.dll      %WORKDIR_EXE%\
+copy /Y /B %DST%\*.pdb      %WORKDIR_EXE%\
 
 : LICENSE
 copy /Y .\LICENSE                                   %WORKDIR_EXE%\license\ > NUL
@@ -213,42 +219,42 @@ copy /Y /B %INSTALLER_RESOURCES_CTAGS%\ctags.exe    %WORKDIR_EXE%\
 copy /Y /B %INSTALLER_RESOURCES_CTAGS%\README.md    %WORKDIR_EXE%\license\ctags\
 copy /Y /B %INSTALLER_RESOURCES_CTAGS%\license\*.*  %WORKDIR_EXE%\license\ctags\
 
-copy /Y /B help\macro\macro.chm    %WORKDIR_EXE%\
-copy /Y /B help\plugin\plugin.chm  %WORKDIR_EXE%\
-copy /Y /B help\sakura\sakura.chm  %WORKDIR_EXE%\
-copy /Y /B html\sakura-doxygen.chm %WORKDIR_DEV%\
-copy /Y /B html\sakura-doxygen.chi %WORKDIR_DEV%\
+copy /Y /B %SRC%\help\macro\macro.chm    %WORKDIR_EXE%\
+copy /Y /B %SRC%\help\plugin\plugin.chm  %WORKDIR_EXE%\
+copy /Y /B %SRC%\help\sakura\sakura.chm  %WORKDIR_EXE%\
+copy /Y /B %SRC%\html\sakura-doxygen.chm %WORKDIR_DEV%\
+copy /Y /B %SRC%\html\sakura-doxygen.chi %WORKDIR_DEV%\
 
-copy /Y /B installer\Output-%platform%\*.exe       %WORKDIR_INST%\
-copy /Y msbuild-%platform%-%configuration%.log     %WORKDIR_LOG%\
-copy /Y msbuild-%platform%-%configuration%.log.csv %WORKDIR_LOG%\
-if exist "msbuild-%platform%-%configuration%.log.xlsx" (
-	copy /Y /B "msbuild-%platform%-%configuration%.log.xlsx" %WORKDIR_LOG%\
+copy /Y /B %SRC%\installer\Output-%platform%\*.exe       %WORKDIR_INST%\
+copy /Y %SRC%\msbuild-%platform%-%configuration%.log     %WORKDIR_LOG%\
+copy /Y %SRC%\msbuild-%platform%-%configuration%.log.csv %WORKDIR_LOG%\
+if exist "%SRC%\msbuild-%platform%-%configuration%.log.xlsx" (
+	copy /Y /B "%SRC%\msbuild-%platform%-%configuration%.log.xlsx" %WORKDIR_LOG%\
 )
-set ISS_LOG_FILE=iss-%platform%-%configuration%.log
+set ISS_LOG_FILE=%SRC%\iss-%platform%-%configuration%.log
 if exist "%ISS_LOG_FILE%" (
 	copy /Y /B "%ISS_LOG_FILE%" %WORKDIR_LOG%\
 )
 
-copy /Y sakura_core\githash.h                      %WORKDIR_LOG%\
-if exist "cppcheck-install.log" (
-	copy /Y "cppcheck-install.log" %WORKDIR_LOG%\
+copy /Y "%SRC%\sakura_core\githash.h"                      %WORKDIR_LOG%\
+if exist "%SRC%\cppcheck-install.log" (
+	copy /Y "%SRC%\cppcheck-install.log" %WORKDIR_LOG%\
 )
-if exist "cppcheck-%platform%-%configuration%.xml" (
-	copy /Y "cppcheck-%platform%-%configuration%.xml" %WORKDIR_LOG%\
+if exist "%SRC%\cppcheck-%platform%-%configuration%.xml" (
+	copy /Y "%SRC%\cppcheck-%platform%-%configuration%.xml" %WORKDIR_LOG%\
 )
-if exist "cppcheck-%platform%-%configuration%.log" (
-	copy /Y "cppcheck-%platform%-%configuration%.log" %WORKDIR_LOG%\
+if exist "%SRC%\cppcheck-%platform%-%configuration%.log" (
+	copy /Y "%SRC%\cppcheck-%platform%-%configuration%.log" %WORKDIR_LOG%\
 )
 if exist "doxygen-%platform%-%configuration%.log" (
 	copy /Y "doxygen-%platform%-%configuration%.log" %WORKDIR_LOG%\
 )
 
-if exist "set_appveyor_env.bat" (
-	copy /Y "set_appveyor_env.bat" %WORKDIR_LOG%\
+if exist "%SRC%\set_appveyor_env.bat" (
+	copy /Y "%SRC%\set_appveyor_env.bat" %WORKDIR_LOG%\
 )
 
-set HASHFILE=sha256.txt
+set HASHFILE=%SRC%\sha256.txt
 if exist "%HASHFILE%" (
 	del %HASHFILE%
 )
@@ -257,9 +263,9 @@ if exist "%HASHFILE%" (
 	copy /Y %HASHFILE%           %WORKDIR%\
 )
 
-copy /Y installer\warning.txt   %WORKDIR%\
+copy /Y %SRC%\installer\warning.txt   %WORKDIR%\
 if "%ALPHA%" == "1" (
-	copy /Y installer\warning-alpha.txt   %WORKDIR%\
+	copy /Y %SRC%\installer\warning-alpha.txt   %WORKDIR%\
 )
 @rem temporally disable to zip all files to a file to workaround #514.
 @rem pushd %WORKDIR% && call %ZIP_CMD%       %OUTFILE%      .             && popd
@@ -268,20 +274,19 @@ pushd %WORKDIR_LOG%  && call %ZIP_CMD%       %OUTFILE_LOG%  .  && popd
 
 @rem copy text files for warning after zipping %OUTFILE% because %WORKDIR% is the parent directory of %WORKDIR_EXE% and %WORKDIR_INST%.
 if "%ALPHA%" == "1" (
-	copy /Y installer\warning-alpha.txt   %WORKDIR_EXE%\
-	copy /Y installer\warning-alpha.txt   %WORKDIR_INST%\
+	copy /Y %SRC%\installer\warning-alpha.txt   %WORKDIR_EXE%\
+	copy /Y %SRC%\installer\warning-alpha.txt   %WORKDIR_INST%\
 )
-copy /Y installer\warning.txt        %WORKDIR_EXE%\
-copy /Y installer\warning.txt        %WORKDIR_INST%\
-
-pushd %WORKDIR_INST% && call %ZIP_CMD%       %OUTFILE_INST% .  && popd
-pushd %WORKDIR_EXE%  && call %ZIP_CMD%       %OUTFILE_EXE%  .  && popd
-pushd %WORKDIR_DEV%  && call %ZIP_CMD%       %OUTFILE_DEV%  .  && popd
+copy /Y %SRC%\installer\warning.txt        %WORKDIR_EXE%\
+copy /Y %SRC%\installer\warning.txt        %WORKDIR_INST%\
+call %ZIP_CMD%       %OUTFILE_INST%  %WORKDIR_INST%
+call %ZIP_CMD%       %OUTFILE_EXE%   %WORKDIR_EXE%
+call %ZIP_CMD%       %OUTFILE_DEV%   %WORKDIR_DEV%
 
 @echo start zip asm
 mkdir %WORKDIR_ASM%
-copy /Y sakura\%platform%\%configuration%\*.asm %WORKDIR_ASM%\ > NUL
-pushd %WORKDIR_ASM%  && call %ZIP_CMD%       %OUTFILE_ASM%  .  && popd
+copy /Y %DST%\*.asm %WORKDIR_ASM%\ > NUL
+call %ZIP_CMD%       %OUTFILE_ASM%  %WORKDIR_ASM%
 
 @echo end   zip asm
 

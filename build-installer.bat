@@ -21,6 +21,12 @@ if "%configuration%" == "Release" (
 	exit /b 1
 )
 
+if not defined Build^
+   set Build=%~dp0%Platform%\%Config%
+set DST=%Build%
+set SRC=%~dp0
+set SRC=%SRC:~0,-1%
+
 if not defined CMD_ISCC call %~dp0tools\find-tools.bat
 if not defined CMD_ISCC (
 	echo ISCC.exe was not found.
@@ -50,14 +56,14 @@ copy /Y %INSTALLER_RESOURCES_SINT%\keyword\*.*              %INSTALLER_WORK%\key
 copy /Y %INSTALLER_RESOURCES_BRON%\*.txt                    %INSTALLER_WORK%\license\bregonig\ > NUL
 copy /Y %INSTALLER_RESOURCES_CTAGS%\license\*.*             %INSTALLER_WORK%\license\ctags\ > NUL
 
-copy /Y /B help\sakura\sakura.chm                           %INSTALLER_WORK%\ > NUL
-copy /Y /B help\plugin\plugin.chm                           %INSTALLER_WORK%\ > NUL
-copy /Y /B help\macro\macro.chm                             %INSTALLER_WORK%\ > NUL
+copy /Y /B %SRC%\help\sakura\sakura.chm                           %INSTALLER_WORK%\ > NUL
+copy /Y /B %SRC%\help\plugin\plugin.chm                           %INSTALLER_WORK%\ > NUL
+copy /Y /B %SRC%\help\macro\macro.chm                             %INSTALLER_WORK%\ > NUL
 
-copy /Y /B %platform%\%configuration%\*.exe                 %INSTALLER_WORK%\ > NUL
-copy /Y /B %platform%\%configuration%\*.dll                 %INSTALLER_WORK%\ > NUL
+copy /Y /B %DST%\*.exe                 %INSTALLER_WORK%\ > NUL
+copy /Y /B %DST%\*.dll                 %INSTALLER_WORK%\ > NUL
 
-set SAKURA_ISS=installer\sakura-%platform%.iss
+set SAKURA_ISS=%SRC%\installer\sakura-%platform%.iss
 @echo running "%CMD_ISCC%" %SAKURA_ISS%
 "%CMD_ISCC%" %SAKURA_ISS% > %ISS_LOG_FILE% || (echo error && exit /b 1)
 exit /b 0

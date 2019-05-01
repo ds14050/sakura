@@ -1,4 +1,3 @@
-version: 1.0.{build}
 image: Visual Studio 2017
 
 configuration:
@@ -19,14 +18,46 @@ skip_commits:
     - 'azure-pipelines*.yml'
     - 'ci/azure-pipelines/template*.yml'
 
+cache:
+  - C:\SakuraBuild
+  - .\sakura_core\Funccode_define.h
+  - .\sakura_core\Funccode_enum.h
+  - .\sakura_core\githash.h
+
 install:
 - cmd: |
     pip install openpyxl --user
 
-build_script:
+before_build:
 - cmd: |
-    build-all.bat %PLATFORM% %CONFIGURATION%
-    tests\build-and-test.bat %PLATFORM% %CONFIGURATION%
+    set Build=C:\SakuraBuild\%PLATFORM%\%CONFIGURATION%
+    if exist "%Build%" powershell -File .\tools\RestoreCommitterDateRoughly.ps1
+
+build_script:
+- cmd: >
+    for %%B in (
+    build-by-cmake.bat
+    sakura\postBuild.bat
+    build-chm.bat
+    build-installer.bat
+    externals\cppcheck\install-cppcheck.bat
+    run-cppcheck.bat
+    zipArtifacts.bat
+    ) do (cmd /C "pushd "%%~dpB" & %%~nxB %PLATFORM% %CONFIGURATION% all")
+    || (echo error %%B & exit /b 0)
+
+after_build:
+- cmd: set SAKURA_TEST=%Build%\sakura_test.exe
+
+test:
+  assemblies:
+    only:
+      - '%SAKURA_TEST%'
+
+test_script:
+- cmd: |
+    "%SAKURA_TEST%" --gtest_list_tests
+    "%SAKURA_TEST%" | tests\test_result_filter_tell_AppVeyor.bat
 
 artifacts:
   - path: 'sakura-*$(platform)-$(configuration)*.zip'

@@ -17,8 +17,8 @@ set PLATFORM=%1
 set CONFIGURATION=%2
 @echo CONFIGURATION=%CONFIGURATION%
 
-set DEST_DIR=%PLATFORM%\%CONFIGURATION%
-set OUT_DIR=%~dp0..\%DEST_DIR%
+if not defined Build^
+   set Build=%~dp0%PLATFORM%\%CONFIGURATION%
 
 : ---- bron412 ---- :
 set BREGONIG_DLL=bregonig.dll
@@ -32,9 +32,9 @@ if "%platform%" == "x64" (
 if not exist "%BRON_DIR%\%BREGONIG_DLL%" (
 	call "%UNZIP_CMD%" "%~dp0%BRON_ZIP%" "%~dp0%BRON_TMP%" > NUL || (echo error && exit /b 1)
 )
-if not exist "%OUT_DIR%\%BREGONIG_DLL%" (
+if not exist "%DEST_DIR%\%BREGONIG_DLL%" (
 	@echo %BRON_ZIP% -^> %DEST_DIR%\%BREGONIG_DLL%
-	copy /Y /B "%BRON_DIR%\%BREGONIG_DLL%" "%OUT_DIR%\" > NUL
+	copy /Y /B "%BRON_DIR%\%BREGONIG_DLL%" "%DEST_DIR%\" > NUL
 )
 
 : ---- ctags.exe ---- :
@@ -53,9 +53,9 @@ set CTAGS_DIR=%~dp0%CTAGS_TMP%
 if not exist "%CTAGS_DIR%\%CTAGS_EXE%" (
 	call "%UNZIP_CMD%" "%~dp0%CTAGS_ZIP%" "%CTAGS_DIR%" > NUL || (echo error && exit /b 1)
 )
-if not exist "%OUT_DIR%\%CTAGS_EXE%" (
+if not exist "%DEST_DIR%\%CTAGS_EXE%" (
 	@echo %CTAGS_ZIP% -^> %DEST_DIR%\%CTAGS_EXE%
-	copy /Y /B "%CTAGS_DIR%\%CTAGS_EXE%" "%OUT_DIR%\" > NUL
+	copy /Y /B "%CTAGS_DIR%\%CTAGS_EXE%" "%DEST_DIR%\" > NUL
 )
 
 ENDLOCAL
