@@ -48,9 +48,5 @@ elseif (MINGW)
 	target_link_libraries (${project_name} PRIVATE ${ALL_O})
 endif ()
 
-# link with GoogleTest
-target_link_libraries(${project_name} PRIVATE ${GTEST})
-target_link_libraries(${project_name} PRIVATE ${GTEST_MAIN})
-
-# link libraries
-target_link_libraries (${project_name} PRIVATE winspool ole32 oleaut32 uuid comctl32 imm32 mpr imagehlp shlwapi winmm windowscodecs msimg32)
+# link libraries (googletest and Editor's dependencies)
+target_link_libraries (${project_name} PRIVATE ${GTEST_MAIN} winspool ole32 oleaut32 uuid comctl32 imm32 mpr imagehlp shlwapi winmm windowscodecs msimg32)

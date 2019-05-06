@@ -10,40 +10,35 @@ Find the GoogleTest from NuGet repository.
 Imported Targets
 ^^^^^^^^^^^^^^^^
 
-This module defines any :ref:`Imported Targets <Imported Targets>`.
+This module defines two :ref:`Imported Targets <Imported Targets>`.
+
+``NuGetGTest::GTest``
+
+``NuGetGTest::Main ``
 
 Result Variables
 ^^^^^^^^^^^^^^^^
 
-This module will set the following variables in your project
+This module will set the following variable in your project
 (see :ref:`Standard Variable Names <CMake Developer Standard Variable Names>`):
 
 ``NUGET_GTEST_FOUND``
   System has the NuGet GoogleTest package.
 
-Commands
-^^^^^^^^
+Hints
+^^^^^
 
-This module defines the following commands.
-
-  NuGet_GTest_target_link_libraries(_target)
+``NUGET_PACKAGES_DIR``
+  Define the root directory of NuGet packages.
 
 #]=======================================================================]
 
 cmake_minimum_required(VERSION 3.12)
 
-function(NuGet_GTest_target_link_libraries _target)
-  # add preprocessor symbol definitions required for GoogleTest in MSVC
-  target_compile_definitions(${_target} PRIVATE _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING)
-
-  # add NuGet.targets as a library
-  target_link_libraries(${_target} PRIVATE ${NuGet_GTest_Root}/build/${NuGet_GTest_Framework}/${NuGet_GTest_Id}.targets)
-endfunction()
-
-# the NuGet Command Line Interface required.
-find_package(NuGet REQUIRED)
-
 # define variables for NuGet package of GoogleTest.
+if(NOT NUGET_PACKAGES_DIR)
+  set(NUGET_PACKAGES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/packages)
+endif()
 set(NuGet_GTest_Name		Microsoft.googletest)
 set(NuGet_GTest_Id			Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static)
 set(NuGet_GTest_Version		1.8.0)
