@@ -1,10 +1,8 @@
-﻿cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.6)
 include(${CMAKE_SOURCE_DIR}/runtime.cmake)
 
 # define a variable of project name
 set(project_name tests1)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/../../cmake)
 
 # define a variable SRC with file GLOB
 file(GLOB TEST_SRC ${CMAKE_CURRENT_LIST_DIR}/test*.cpp)
@@ -51,28 +49,8 @@ elseif (MINGW)
 endif ()
 
 # link with GoogleTest
-if(BUILD_GTEST)
-	# Build GoogleTest from source code.
-	target_link_libraries(${project_name} PRIVATE gtest)
-	target_link_libraries(${project_name} PRIVATE gtest_main)
-elseif(MSVC)
-	# Build without GoogleTest for MSVC(use NuGet package).
-	set(NUGET_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../externals/nuget)
-	set(NUGET_PACKAGES_DIR ${CMAKE_CURRENT_LIST_DIR}/../../packages)
-
-	#execute nuget restore.
-	find_package(NuGet REQUIRED)
-	NuGet_restore_package(${CMAKE_CURRENT_LIST_DIR}/packages.config)
-
-	#link with NuGet package of GoogleTest.
-	find_package(NuGetGTest)
-	NuGet_GTest_target_link_libraries(${project_name})
-else()
-	# Build without GoogleTest(use system library).
-	find_package(GTest REQUIRED)
-	target_link_libraries(${project_name} PRIVATE GTest::GTest)
-	target_link_libraries(${project_name} PRIVATE GTest::Main)
-endif()
+target_link_libraries(${project_name} PRIVATE ${GTEST})
+target_link_libraries(${project_name} PRIVATE ${GTEST_MAIN})
 
 # link libraries
 target_link_libraries (${project_name} PRIVATE winspool ole32 oleaut32 uuid comctl32 imm32 mpr imagehlp shlwapi winmm windowscodecs msimg32)

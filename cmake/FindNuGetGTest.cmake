@@ -56,5 +56,13 @@ find_path(GTEST_TARGET ${NuGet_GTest_Id}.targets
       PATH_SUFFIXES /build/${NuGet_GTest_Framework})
 
 find_package(PackageHandleStandardArgs QUIET)
-find_package_handle_standard_args(GTest
+find_package_handle_standard_args(NuGet_GTest
                                   REQUIRED_VARS	GTEST_TARGET)
+
+add_library (NuGetGTest::GTest STATIC IMPORTED)
+add_library (NuGetGTest::Main  STATIC IMPORTED)
+set_target_properties (NuGetGTest::GTest NuGetGTest::Main PROPERTIES
+	IMPORTED_LOCATION "${NuGet_GTest_Root}/build/${NuGet_GTest_Framework}/${NuGet_GTest_Id}.targets"
+	INTERFACE_COMPILE_DEFINITIONS _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+)
+target_link_libraries (NuGetGTest::Main INTERFACE NuGetGTest::GTest)

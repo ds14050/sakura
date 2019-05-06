@@ -55,7 +55,7 @@ function(NuGet_restore_package _packages_config)
 endfunction()
 
 if(NOT NUGET_PACKAGES_DIR)
-  set(NUGET_PACKAGES_DIR ${CMAKE_LIST_DIR}/packages)
+  set(NUGET_PACKAGES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/packages)
 endif()
 mark_as_advanced(NUGET_PACKAGES_DIR)
 

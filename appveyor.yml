@@ -22,7 +22,8 @@ skip_commits:
 install:
 - cmd: |
     pip install openpyxl --user
-    C:\msys64\usr\bin\bash --login -c "pacman -S --noconfirm mingw-w64-x86_64-gtest"
+    if not "%PLATFORM%" == "MinGW" nuget restore -PackagesDirectory ".\tests\packages" ".\tests\packages.config"
+    if     "%PLATFORM%" == "MinGW" C:\msys64\usr\bin\bash --login -c "pacman -S --noconfirm mingw-w64-x86_64-gtest"
 
 build_script:
 - cmd: |
