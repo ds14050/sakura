@@ -3,11 +3,9 @@ image: Visual Studio 2017
 
 configuration:
   - Debug
-  - Release
 
 platform:
   - Win32
-  - x64
   - MinGW
 
 # see "Skip commits" at https://www.appveyor.com/docs/how-to/filtering-commits/#commit-files-github-and-bitbucket-only
@@ -18,6 +16,10 @@ skip_commits:
     - .editorconfig
     - 'azure-pipelines*.yml'
     - 'ci/azure-pipelines/template*.yml'
+
+cache:
+  - tests\build\%platform%\%configuration%\googletest -> tests\CMakeLists.txt, tests/googletest
+  - tests\googletest                                  -> tests\CMakeLists.txt, tests/googletest
 
 install:
 - cmd: |

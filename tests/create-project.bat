@@ -25,11 +25,8 @@ if not exist "googletest\CMakeLists.txt" (
     git submodule update
 )
 
-set BUILDDIR=build\%platform%
-if exist "%BUILDDIR%" (
-	rmdir /s /q "%BUILDDIR%"
-)
-mkdir "%BUILDDIR%"
+set BUILDDIR=build\%platform%\%configuration%
+if not exist "%BUILDDIR%" mkdir "%BUILDDIR%"
 
 call :setenv_%platform% %platform% %configuration%
 cmake %CMAKE_GEN_OPT% -H. -B"%BUILDDIR%" || set ERROR_RESULT=1
@@ -53,6 +50,6 @@ exit /b
 exit /b
 
 :setenv_MinGW
-	set CMAKE_GEN_OPT=-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE="%~2" -D BUILD_GTEST=OFF
+	set CMAKE_GEN_OPT=-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE="%~2" -D BUILD_GTEST=ON
 	set PATH=C:\msys64\mingw64\bin;%PATH:C:\Program Files\Git\usr\bin;=%
 exit /b
