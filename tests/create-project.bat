@@ -20,10 +20,8 @@ if "%ERROR_RESULT%" == "1" (
 
 pushd "%~dp0"
 
-if not exist "googletest\CMakeLists.txt" (
-    git submodule init
-    git submodule update
-)
+git submodule init   -- googletest
+git submodule update -- googletest
 
 set BUILDDIR=build\%platform%\%configuration%
 if not exist "%BUILDDIR%" mkdir "%BUILDDIR%"
