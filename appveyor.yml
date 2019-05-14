@@ -28,8 +28,12 @@ build_script:
 - cmd: |
     build-all.bat %PLATFORM% %CONFIGURATION%
     tests\build-and-test.bat %PLATFORM% %CONFIGURATION%
+- ps: |
+    $wc = New-Object 'System.Net.WebClient'
+    $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path ".\tests\build\$($env:platform)\$($env:configuration)\tests1.exe-googletest-$($env:platform)-$($env:configuration).xml"))
 
 artifacts:
   - path: 'sakura-*$(platform)-$(configuration)*.zip'
   - path: 'sakura-*$(platform)-$(configuration)*.zip.md5'
   - path: 'sha256.txt'
+  - path: '.\tests\build\$(platform)\$(configuration)\tests1.exe-googletest-$(platform)-$(configuration).xml'

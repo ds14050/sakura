@@ -26,7 +26,7 @@ set testMsg=
 for /F "usebackq delims=" %%L in (`FINDSTR /B "^"`) do (
 	echo %%L
 
-	for /F "tokens=1,2,3,5 delims=[]() " %%A in ("%%L") do (
+	for /F "tokens=1,2,3,4,5 delims=[]() " %%A in ("%%L") do (
 		if "%%A" == "----------" (
 			if not "%%D" == "" (
 				set fileName=%%D
@@ -47,6 +47,10 @@ for /F "usebackq delims=" %%L in (`FINDSTR /B "^"`) do (
 			set FAILED=FAILED
 		) else if "%%A" == "PASSED" (
 			set PASSED=PASSED
+		) else if "%%A" == "YOU" (
+			if "%%A %%B _ %%D %%E" == "YOU HAVE _ DISABLED TEST" (
+				rem
+			)
 		) else if "%%A" == "==========" (
 			rem
 		) else (

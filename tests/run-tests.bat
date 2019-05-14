@@ -7,10 +7,9 @@ set ERROR_RESULT=0
 set FILTER_BAT=%~dp0test_result_filter_tell_AppVeyor.bat
 
 pushd %~dp0
-set BUILDDIR=build\%platform%
-set BINARY_DIR=%BUILDDIR%\unittests\%platform%\%configuration%
+set BUILDDIR=build\%platform%\%configuration%
 
-pushd %BINARY_DIR%
+pushd %BUILD_DIR%
 for /r %%i in (tests*.exe) do (
 	set TEST_LAUNCHED=1
 
@@ -18,7 +17,7 @@ for /r %%i in (tests*.exe) do (
 	%%i --gtest_list_tests || set ERROR_RESULT=1
 
 	@echo %%i --gtest_output=xml:%%i-googletest-%platform%-%configuration%.xml ^| "%FILTER_BAT%"
-	%%i --gtest_output=xml:%%i-googletest-%platform%-%configuration%.xml  | "%FILTER_BAT%" || set ERROR_RESULT=1
+	%%i --gtest_output=xml:%%i-googletest-%platform%-%configuration%.xml || set ERROR_RESULT=1
 )
 popd
 popd
