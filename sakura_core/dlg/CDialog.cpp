@@ -721,8 +721,21 @@ LRESULT CALLBACK SubEditProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if( wParam == VK_DELETE ){
 			HWND hwndCombo = data->hwndCombo;
-			BOOL bShow = Combo_GetDroppedState(hwndCombo);
-			if( bShow ){
+			bool bListSelected = 0 <= Combo_GetCurSel(hwndCombo);
+			bool bTextSelected = MAKELRESULT(0, (WORD)SendMessage(hwndCombo, WM_GETTEXTLENGTH, 0, 0))
+			                     == SendMessage(hwndCombo, CB_GETEDITSEL, NULL, NULL);
+			if (bListSelected && bTextSelected) {
+			/*
+				エディットテキストを全選択して Delete したときに
+				ドロップダウンリストが選択されていれば、テキストと
+				同時にリスト項目を削除します。
+
+				削除するリスト項目とテキストの内容は確認していません。
+
+				通常は選択状態にあるリスト項目とエディットボックス
+				の内容が同期しているので不都合がありません。マウス
+				でリストをポイントすることで不一致を生み出せます。気にしません。
+			*/
 				DeleteItem(hwndCombo, data->pRecent);
 				return 0;
 			}
