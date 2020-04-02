@@ -721,24 +721,29 @@ LRESULT CALLBACK SubEditProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if( wParam == VK_DELETE ){
 			HWND hwndCombo = data->hwndCombo;
-			bool bListSelected = 0 <= Combo_GetCurSel(hwndCombo);
-			bool bTextSelected = MAKELRESULT(0, (WORD)SendMessage(hwndCombo, WM_GETTEXTLENGTH, 0, 0))
-			                     == SendMessage(hwndCombo, CB_GETEDITSEL, NULL, NULL);
-			if (bListSelected && bTextSelected) {
+			bool bSelected = 0 <= Combo_GetCurSel(hwndCombo);
+			if (bSelected) {
 			/*
-				エディットテキストを全選択して Delete したときに
-				ドロップダウンリストが選択されていれば、テキストと
-				同時にリスト項目を削除します。
+				リストからフォーカスが失われたときにエディットボックスが
+				クリアされたり(WM_SETTEXT)、全選択されたり(EM_SETSEL)する
+				のをキャンセルしながら、リスト項目を削除する。
 
-				削除するリスト項目とテキストの内容は確認していません。
-
-				通常は選択状態にあるリスト項目とエディットボックス
-				の内容が同期しているので不都合がありません。マウス
-				でリストをポイントすることで不一致を生み出せます。気にしません。
+				これは付加的な処理であり、この後 Delete キーはエディット
+				ボックスの編集にも使用される。
 			*/
+				HWND h = data->hwnd_which_should_ignore_SETSEL_SETTEXT;
+				data->hwnd_which_should_ignore_SETSEL_SETTEXT = data->hwndEdit;
 				DeleteItem(hwndCombo, data->pRecent);
-				return 0;
+				data->hwnd_which_should_ignore_SETSEL_SETTEXT = h;
 			}
+		}
+		break;
+	}
+	case WM_SETTEXT:
+	case EM_SETSEL:
+	{
+		if (hwnd == data->hwnd_which_should_ignore_SETSEL_SETTEXT) {
+			return 0;
 		}
 		break;
 	}
@@ -792,6 +797,7 @@ LRESULT CALLBACK SubComboBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	{
 		if( NULL == data->pEditWndProc ){
 			HWND hwndCtl = (HWND)lParam;
+			data->hwndEdit = hwndCtl;
 			data->pEditWndProc = (WNDPROC)::GetWindowLongPtr(hwndCtl, GWLP_WNDPROC);
 			::SetProp(hwndCtl, TSTR_SUBCOMBOBOXDATA, data);
 			::SetWindowLongPtr(hwndCtl, GWLP_WNDPROC, (LONG_PTR)SubEditProc);

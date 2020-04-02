@@ -53,10 +53,12 @@ struct SComboBoxItemDeleter
 {
 	CRecent*	pRecent;
 	HWND		hwndCombo;
+	HWND		hwndEdit;
+	HWND		hwnd_which_should_ignore_SETSEL_SETTEXT;
 	WNDPROC		pComboBoxWndProc;
 	WNDPROC		pEditWndProc;
 	WNDPROC		pListBoxWndProc;
-	SComboBoxItemDeleter(): pRecent(NULL), hwndCombo(NULL), pComboBoxWndProc(NULL), pEditWndProc(NULL), pListBoxWndProc(NULL){}
+	SComboBoxItemDeleter(): pRecent(NULL), hwndCombo(NULL), hwndEdit(NULL), hwnd_which_should_ignore_SETSEL_SETTEXT(NULL), pComboBoxWndProc(NULL), pEditWndProc(NULL), pListBoxWndProc(NULL){}
 };
 
 /*-----------------------------------------------------------------------
