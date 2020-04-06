@@ -40,6 +40,8 @@ public:
 
 protected:
 	CFontAutoDeleter		m_cFontText2;
+	SComboBoxItemDeleter m_comboDelText2;
+	CRecentReplace       m_cRecentReplace;
 
 	/*
 	||  実装ヘルパ関数

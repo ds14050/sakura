@@ -721,8 +721,9 @@ LRESULT CALLBACK SubEditProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if( wParam == VK_DELETE ){
 			HWND hwndCombo = data->hwndCombo;
-			BOOL bShow = Combo_GetDroppedState(hwndCombo);
-			if( bShow ){
+			bool bListShown = FALSE != Combo_GetDroppedState(hwndCombo);
+			bool bListSelected = 0 <= Combo_GetCurSel(hwndCombo);
+			if (bListShown && bListSelected) { // (! Shown && Selected) はありうる。
 				DeleteItem(hwndCombo, data->pRecent);
 				return 0;
 			}
@@ -746,18 +747,6 @@ LRESULT CALLBACK SubListBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	SComboBoxItemDeleter* data = (SComboBoxItemDeleter*)::GetProp( hwnd, TSTR_SUBCOMBOBOXDATA );
 	switch( uMsg ){
-	case WM_KEYDOWN:
-	{
-		if( wParam == VK_DELETE ){
-			HWND hwndCombo = data->hwndCombo;
-			BOOL bShow = Combo_GetDroppedState(hwndCombo);
-			if( bShow ){
-				DeleteItem(hwndCombo, data->pRecent);
-				return 0;
-			}
-		}
-		break;
-	}
 	case WM_DESTROY:
 	{
 		::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)data->pListBoxWndProc);
