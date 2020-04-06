@@ -702,14 +702,18 @@ static void DeleteItem(HWND hwnd, CRecent* pRecent)
 {
 	int nIndex = Combo_GetCurSel(hwnd);
 	if( 0 <= nIndex ){
-		std::vector<WCHAR> szText;
-		szText.resize(Combo_GetLBTextLen(hwnd, nIndex) + 1);
+		std::vector<WCHAR> szText(Combo_GetLBTextLen(hwnd, nIndex) + 1);
 		Combo_GetLBText(hwnd, nIndex, &szText[0]);
+		pRecent->DeleteItem(pRecent->FindItemByText(&szText[0]));
+	/*
+		DeleteString するだけだと、リスト全体の項目数は変わらないまま
+		以降の項目が前に詰められるために、リストの末尾に空白行が溜まる。
+		それなら何が起こったのか把握しやすいように、削除する項目と空白行を
+		入れ替えにして配置を維持する。空白行はリストの再作成に伴って消える。
+	*/
 		Combo_DeleteString(hwnd, nIndex);
-		int nRecentIndex = pRecent->FindItemByText(&szText[0]);
-		if( 0 <= nRecentIndex ){
-			pRecent->DeleteItem(nRecentIndex);
-		}
+		Combo_InsertString(hwnd, nIndex, TEXT(""));
+		Combo_SetCurSel(hwnd, nIndex);
 	}
 }
 
@@ -721,29 +725,25 @@ LRESULT CALLBACK SubEditProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if( wParam == VK_DELETE ){
 			HWND hwndCombo = data->hwndCombo;
-			bool bSelected = 0 <= Combo_GetCurSel(hwndCombo);
-			if (bSelected) {
+			bool bListShown = FALSE != Combo_GetDroppedState(hwndCombo);
+			bool bListSelected = 0 <= Combo_GetCurSel(hwndCombo); // (! Shown && Selected) はありうる。
+			bool bTextSelected = MAKELRESULT(0, (WORD)SendMessage(hwndCombo, WM_GETTEXTLENGTH, 0, 0))
+			                     == SendMessage(hwndCombo, CB_GETEDITSEL, NULL, NULL);
+			if (bListShown && bListSelected && bTextSelected) {
 			/*
-				リストからフォーカスが失われたときにエディットボックスが
-				クリアされたり(WM_SETTEXT)、全選択されたり(EM_SETSEL)する
-				のをキャンセルしながら、リスト項目を削除する。
+				エディットテキストを全選択して Delete したときに
+				ドロップダウンリストが選択されていれば、テキストと
+				同時にリスト項目を削除する。
 
-				これは付加的な処理であり、この後 Delete キーはエディット
-				ボックスの編集にも使用される。
+				削除するリスト項目とテキストの内容は確認していない。
+
+				通常は選択状態にあるリスト項目とエディットボックス
+				の内容が同期しているので不都合がない。マウスでリスト
+				をポイントすることで不一致を生み出せるが、気にしない。
 			*/
-				HWND h = data->hwnd_which_should_ignore_SETSEL_SETTEXT;
-				data->hwnd_which_should_ignore_SETSEL_SETTEXT = data->hwndEdit;
 				DeleteItem(hwndCombo, data->pRecent);
-				data->hwnd_which_should_ignore_SETSEL_SETTEXT = h;
+				return 0;
 			}
-		}
-		break;
-	}
-	case WM_SETTEXT:
-	case EM_SETSEL:
-	{
-		if (hwnd == data->hwnd_which_should_ignore_SETSEL_SETTEXT) {
-			return 0;
 		}
 		break;
 	}
@@ -764,18 +764,6 @@ LRESULT CALLBACK SubListBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	SComboBoxItemDeleter* data = (SComboBoxItemDeleter*)::GetProp( hwnd, TSTR_SUBCOMBOBOXDATA );
 	switch( uMsg ){
-	case WM_KEYDOWN:
-	{
-		if( wParam == VK_DELETE ){
-			HWND hwndCombo = data->hwndCombo;
-			BOOL bShow = Combo_GetDroppedState(hwndCombo);
-			if( bShow ){
-				DeleteItem(hwndCombo, data->pRecent);
-				return 0;
-			}
-		}
-		break;
-	}
 	case WM_DESTROY:
 	{
 		::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)data->pListBoxWndProc);
@@ -797,7 +785,6 @@ LRESULT CALLBACK SubComboBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	{
 		if( NULL == data->pEditWndProc ){
 			HWND hwndCtl = (HWND)lParam;
-			data->hwndEdit = hwndCtl;
 			data->pEditWndProc = (WNDPROC)::GetWindowLongPtr(hwndCtl, GWLP_WNDPROC);
 			::SetProp(hwndCtl, TSTR_SUBCOMBOBOXDATA, data);
 			::SetWindowLongPtr(hwndCtl, GWLP_WNDPROC, (LONG_PTR)SubEditProc);
