@@ -48,13 +48,21 @@
 bool CDocFileOperation::_ToDoLock() const
 {
 	// ファイルを開いていない
-	if( !m_pcDocRef->m_cDocFile.GetFilePathClass().IsValidPath() )return false;
-
+	if (! m_pcDocRef->m_cDocFile.GetFilePathClass().IsValidPath()) {
+		return false;
+	}
 	// ビューモード
-	if( CAppMode::getInstance()->IsViewMode() )return false;
-
+	if (CAppMode::getInstance()->IsViewMode()) {
+		return false;
+	}
 	// 排他設定
-	if( GetDllShareData().m_Common.m_sFile.m_nFileShareMode == SHAREMODE_NOT_EXCLUSIVE )return false;
+	if (GetDllShareData().m_Common.m_sFile.m_nFileShareMode == SHAREMODE_NOT_EXCLUSIVE) {
+		return false;
+	}
+	// 上書き禁止
+	if (! m_pcDocRef->m_cDocLocker.IsDocWritable()) {
+		return false;
+	}
 
 	return true;
 }

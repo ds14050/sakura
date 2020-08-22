@@ -96,7 +96,7 @@ public:
 	bool		GetDocumentBomExist() const;				//!< ドキュメントのBOM付加を取得
 	void		SetDocumentEncoding(ECodeType eCharCode, bool bBom);	//!< ドキュメントの文字コードを設定
 	bool IsModificationForbidden( EFunctionCode nCommand ) const;	//!< 指定コマンドによる書き換えが禁止されているかどうか	//Aug. 14, 2000 genta
-	bool IsEditable() const { return !CAppMode::getInstance()->IsViewMode() && !(!m_cDocLocker.IsDocWritable() && GetDllShareData().m_Common.m_sFile.m_bUneditableIfUnwritable); }	//!< 編集可能かどうか
+	bool IsEditable() const { return !CAppMode::getInstance()->IsViewMode() && ! (GetDllShareData().m_Common.m_sFile.m_bUneditableIfUnwritable && ! m_cDocLocker.IsDocWritable()); }	//!< 編集可能かどうか
 	void GetSaveInfo(SSaveInfo* pSaveInfo) const;			//!< セーブ情報を取得
 
 	//状態

@@ -53,12 +53,11 @@ public:
 	bool FileLock(EShareMode eShareMode, bool bMsg);	//!< ファイルの排他ロック
 	void FileUnlock();						//!< ファイルの排他ロック解除
 	bool IsFileLocking() const{ return m_hLockedFile!=INVALID_HANDLE_VALUE; }
-	EShareMode GetShareMode() const{ return m_nFileShareModeOld; }
-	void SetShareMode(EShareMode eShareMode) { m_nFileShareModeOld = eShareMode; }
+	EShareMode GetShareMode() const{ return m_nFileShareMode; } // 意味のない値 unless IsFileLocking();
 private:
 	CFilePath	m_szFilePath;				//!< ファイルパス
 	HANDLE		m_hLockedFile;				//!< ロックしているファイルのハンドル
-	EShareMode	m_nFileShareModeOld;		//!< ファイルの排他制御モード
+	EShareMode	m_nFileShareMode;		//!< ファイルの排他制御モード
 };
 
 

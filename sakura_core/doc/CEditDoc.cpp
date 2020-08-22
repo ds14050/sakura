@@ -203,9 +203,6 @@ CEditDoc::CEditDoc(CEditApp* pcApp)
 	m_cDocFile.SetCodeSet( ref.m_encoding.m_eDefaultCodetype, ref.m_encoding.m_bDefaultBom );
 	m_cDocEditor.m_cNewLineCode = ref.m_encoding.m_eDefaultEoltype;
 
-	// 排他制御オプションを初期化
-	m_cDocFile.SetShareMode( GetDllShareData().m_Common.m_sFile.m_nFileShareMode );
-
 #ifdef _DEBUG
 	{
 		// 編集禁止コマンドの並びをチェック
@@ -676,20 +673,18 @@ void CEditDoc::OnChangeSetting(
 	}
 
 	/* ファイルの排他モード変更 */
-	if( m_cDocFile.GetShareMode() != GetDllShareData().m_Common.m_sFile.m_nFileShareMode ){
-		m_cDocFile.SetShareMode( GetDllShareData().m_Common.m_sFile.m_nFileShareMode );
-
+	if(! m_cDocFile.IsFileLocking() || m_cDocFile.GetShareMode() != GetDllShareData().m_Common.m_sFile.m_nFileShareMode ){
+	/*
+		以前は ! m_cDocFile.IsFileLocking() に相当する条件がなかったため、
+		上書き不可から可能な状態に変化しても、排他オプションを変更するまで
+		排他制御のリトライが行われていなかった。その挙動は保存していない。
+	*/
 		/* ファイルの排他ロック解除 */
 		m_cDocFileOperation.DoFileUnlock();
-
-		// ファイル書込可能のチェック処理
-		bool bOld = m_cDocLocker.IsDocWritable();
-		m_cDocLocker.CheckWritable(bOld && !CAppMode::getInstance()->IsViewMode());	// 書込可から不可に遷移したときだけメッセージを出す（出過ぎると鬱陶しいよね？）
-
-		/* ファイルの排他ロック */
-		if( m_cDocLocker.IsDocWritable() ){
-			m_cDocFileOperation.DoFileLock();
-		}
+		//// 上書き可能かどうかファイルの状態の変化を反映できるようにする。
+		//m_cDocLocker.CheckWritable();
+		/* ファイルの排他ロック(必要がなければ実際にロックはしない) */
+		m_cDocFileOperation.DoFileLock();
 	}
 
 	/* 共有データ構造体のアドレスを返す */

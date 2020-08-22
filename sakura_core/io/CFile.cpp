@@ -9,7 +9,7 @@
 
 CFile::CFile(LPCTSTR pszPath)
 : m_hLockedFile( INVALID_HANDLE_VALUE )
-, m_nFileShareModeOld( SHAREMODE_NOT_EXCLUSIVE )
+, m_nFileShareMode( SHAREMODE_NOT_EXCLUSIVE )
 {
 	if(pszPath){
 		SetFilePath(pszPath);
@@ -87,6 +87,7 @@ void CFile::FileUnlock()
 	if( m_hLockedFile != INVALID_HANDLE_VALUE ){
 		::CloseHandle( m_hLockedFile );
 		m_hLockedFile = INVALID_HANDLE_VALUE;
+		m_nFileShareMode = SHAREMODE_NOT_EXCLUSIVE;
 	}
 }
 
@@ -104,6 +105,7 @@ bool CFile::FileLock( EShareMode eShareMode, bool bMsg )
 
 	// モード設定
 	if(eShareMode==SHAREMODE_NOT_EXCLUSIVE)return true;
+	m_nFileShareMode = eShareMode; // 設定はするけど IsFileLocking() でないなら意味のない値。
 	
 	//フラグ
 	DWORD dwShareMode=0;

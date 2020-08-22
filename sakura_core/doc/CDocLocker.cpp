@@ -10,7 +10,9 @@
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 
 CDocLocker::CDocLocker()
-: m_bIsDocWritable(true)
+: m_eIsDocWritable(UNTESTED)
+, m_bNoMsg(false)
+, m_bNeedRecheck(false)
 {
 }
 
@@ -22,11 +24,7 @@ void CDocLocker::OnAfterLoad(const SLoadInfo& sLoadInfo)
 {
 	CEditDoc* pcDoc = GetListeningDoc();
 
-	//書き込めるか検査
-	CheckWritable(!sLoadInfo.bViewMode && !sLoadInfo.bWritableNoMsg);
-	if( !m_bIsDocWritable ){
-		return;
-	}
+	m_bNoMsg = sLoadInfo.bWritableNoMsg;
 
 	// ファイルの排他ロック
 	pcDoc->m_cDocFileOperation.DoFileLock();
@@ -48,8 +46,8 @@ void CDocLocker::OnAfterSave(const SSaveInfo& sSaveInfo)
 {
 	CEditDoc* pcDoc = GetListeningDoc();
 
-	// 書き込めるか検査
-	m_bIsDocWritable = true;
+	m_eIsDocWritable = WRITABLE;
+	m_bNeedRecheck = false;
 
 	// ファイルの排他ロック
 	pcDoc->m_cDocFileOperation.DoFileLock();
@@ -60,28 +58,34 @@ void CDocLocker::OnAfterSave(const SSaveInfo& sSaveInfo)
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 
 //! 書き込めるか検査
-void CDocLocker::CheckWritable(bool bMsg)
+void CDocLocker::_CheckWritable()
 {
 	CEditDoc* pcDoc = GetListeningDoc();
 
+	m_bNeedRecheck = false;
+
 	// ファイルが存在しない場合 (「開く」で新しくファイルを作成した扱い) は、以下の処理は行わない
 	if( !fexist(pcDoc->m_cDocFile.GetFilePath()) ){
-		m_bIsDocWritable = true;
+		m_eIsDocWritable = WRITABLE;
 		return;
 	}
 
 	// 読み取り専用ファイルの場合は、以下の処理は行わない
 	if( !pcDoc->m_cDocFile.HasWritablePermission() ){
-		m_bIsDocWritable = false;
+		m_eIsDocWritable = UNWRITABLE;
 		return;
 	}
 
+	WritableState IsWritableOld = m_eIsDocWritable;
+
 	// 書き込めるか検査
 	CDocFile& cDocFile = pcDoc->m_cDocFile;
-	m_bIsDocWritable = cDocFile.IsFileWritable();
-	if(!m_bIsDocWritable && bMsg){
+	m_eIsDocWritable = cDocFile.IsFileWritable() ? WRITABLE : UNWRITABLE;
+	if(m_eIsDocWritable == UNWRITABLE && ! m_bNoMsg && IsWritableOld != UNWRITABLE){
 		// 排他されている場合だけメッセージを出す
 		// その他の原因（ファイルシステムのセキュリティ設定など）では読み取り専用と同様にメッセージを出さない
+		// 編集禁止だったファイルを読み直したときには改めてメッセージを出さない(m_bNoMsg)。
+		// 書き込み可能状態が 不可ではない(不明,可能)→不可 と変化した場合にだけメッセージを出す。
 		if( ::GetLastError() == ERROR_SHARING_VIOLATION ){
 			TopWarningMessage(
 				CEditWnd::getInstance()->GetHwnd(),

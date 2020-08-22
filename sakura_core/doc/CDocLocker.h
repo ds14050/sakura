@@ -31,7 +31,7 @@ public:
 	CDocLocker();
 
 	//クリア
-	void Clear(void) { m_bIsDocWritable = true; }
+	void Clear() { m_eIsDocWritable = UNTESTED; m_bNoMsg = m_bNeedRecheck = false; }
 
 	//ロード前後
 	void OnAfterLoad(const SLoadInfo& sLoadInfo);
@@ -41,14 +41,31 @@ public:
 	void OnAfterSave(const SSaveInfo& sSaveInfo);
 
 	//状態
-	bool IsDocWritable() const{ return m_bIsDocWritable; }
+	bool IsDocWritable() const;
 
 	//チェック
-	void CheckWritable(bool bMsg);
-
+	void CheckWritable() { m_bNeedRecheck = true; };
 private:
-	bool m_bIsDocWritable;
+	void _CheckWritable();
+
+	enum WritableState { UNTESTED,WRITABLE,UNWRITABLE } m_eIsDocWritable;
+	bool m_bNoMsg;
+	bool m_bNeedRecheck;
 };
+
+inline bool CDocLocker::IsDocWritable() const
+{
+/*
+	CDocLocker の const 性とは何か。ファイルの属性だとすればそれは不定だ。
+	CDocLocker が保証できる const 性があるとすれば、テストしたある時点での
+	書き込み可能性がその後も提示され続けることではないか。Clear が呼ばれるまでは。
+	不明だったものを明らかにすることは CDocLocker の const 性を破らないと考える。
+*/
+	if (m_eIsDocWritable == UNTESTED || m_bNeedRecheck) {
+		const_cast<CDocLocker*>(this)->_CheckWritable();
+	}
+	return m_eIsDocWritable == WRITABLE;
+}
 
 #endif /* SAKURA_CDOCLOCKER_5E410382_D36E_46CE_B212_07F2F346FD3C_H_ */
 /*[EOF]*/
